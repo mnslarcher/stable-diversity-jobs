@@ -42,12 +42,10 @@ def create_prompt(ethnicity, gender_appearance, job, adjectives):
     return f"A professional photo of a {ethnicity} {gender_appearance} {job}, {adjective_str}"
 
 
-# The main function to create the CSV file
 def main(args):
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # Load data from YAML files
     ethnicities = load_yaml("yamls/ethnicities.yaml")
     gender_appearances = load_yaml("yamls/gender-appearances.yaml")
     jobs_dict = load_yaml("yamls/jobs.yaml")
@@ -78,18 +76,5 @@ def main(args):
 
 # Entry point of the script
 if __name__ == "__main__":
-    # Initialize parser
-    parser = argparse.ArgumentParser(
-        description="Generate a CSV file with image-text pairs for dataset preparation."
-    )
-    parser.add_argument(
-        "-o",
-        "--output",
-        type=str,
-        default="./output",
-        help="Directory where the CSV file will be saved. Defaults to ./output.",
-    )
-
-    # Parse arguments
     args = parse_args()
     main(args)
