@@ -20,7 +20,7 @@ def parse_args():
         "--repeat_prompt",
         type=int,
         default=10,
-        help="Number of times to repeat each prompt.",
+        help="Number of times to repeat each prompt. Defaults to 10.",
     )
     parser.add_argument(
         "-o",
