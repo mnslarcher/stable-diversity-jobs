@@ -80,13 +80,13 @@ def main(args):
         for ethnicity in ethnicities:
             for gender_appearance in gender_appearances:
                 for job in jobs:
-                    simple_prompt = create_prompt(job, adjectives)
-                    prompt = create_detailed_prompt(
+                    prompt = create_prompt(job, adjectives)
+                    detailed_prompt = create_detailed_prompt(
                         ethnicity, gender_appearance, job, adjectives
                     )
                     for _ in range(args.repeat_prompt):
                         file_name = f"image_{image_id}.png"
-                        writer.writerow([file_name, simple_prompt, prompt])
+                        writer.writerow([file_name, prompt, detailed_prompt])
                         image_id += 1
 
     logging.info(f"CSV file has been created successfully at {output_file_path}.")
