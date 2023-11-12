@@ -33,8 +33,8 @@ def parse_args():
         "-f",
         "--output_file",
         type=str,
-        default="dataset.csv",
-        help="Name of the output CSV file. Defaults to dataset.csv.",
+        default="metadata.csv",
+        help="Name of the output CSV file. Defaults to metadata.csv.",
     )
     return parser.parse_args()
 
