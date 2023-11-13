@@ -1,9 +1,11 @@
+import argparse
 import csv
-from diffusers import DiffusionPipeline
+from pathlib import Path
+
 import torch
 import tqdm
-import argparse
-from pathlib import Path
+import yaml
+from diffusers import DiffusionPipeline
 
 
 def parse_args():
@@ -23,6 +25,13 @@ def parse_args():
         type=str,
         default="./output",
         help="Directory to save generated images. Defaults to ./output.",
+    )
+    parser.add_argument(
+        "-g",
+        "--guidance_scale",
+        type=float,
+        default=7.5,
+        help="Guidance scale as defined in Classifier-Free Diffusion Guidance. Defaults to 7.5.",
     )
     parser.add_argument(
         "-n",
@@ -48,16 +57,31 @@ def parse_args():
     return parser.parse_args()
 
 
+def load_yaml(file_name):
+    with open(file_name, "r") as file:
+        return yaml.safe_load(file)
+
+
 def get_csv_row_count(file_path):
     with open(file_path, "r", encoding="utf-8") as file:
         return sum(1 for _ in csv.reader(file)) - 1  # Subtract 1 for the header
 
 
 def generate_image(
-    base, refiner, prompt, image_path, generator, n_steps=40, high_noise_frac=0.8
+    base,
+    refiner,
+    prompt,
+    negative_prompt,
+    image_path,
+    generator,
+    guidance_scale=7.5,
+    n_steps=40,
+    high_noise_frac=0.8,
 ):
     image = base(
         prompt=prompt,
+        negative_prompt=negative_prompt,
+        guidance_scale=guidance_scale,
         num_inference_steps=n_steps,
         denoising_end=high_noise_frac,
         output_type="latent",
@@ -66,6 +90,7 @@ def generate_image(
     ).images
     image = refiner(
         prompt=prompt,
+        negative_prompt=negative_prompt,
         num_inference_steps=n_steps,
         denoising_start=high_noise_frac,
         image=image,
@@ -95,11 +120,19 @@ def main(args):
     )
     refiner.set_progress_bar_config(disable=True)
     refiner.to("cuda")
+
+    negative_prompt = ", ".join(
+        load_yaml("prompt_parameters/negatives.yaml")
+    ).capitalize()
+    negative_prompt = ""
+
+    output_dir = Path(args.output_dir)
+
+    generator = torch.Generator()
+    generator.manual_seed(args.seed)
+
     with open(args.metadata, newline="", encoding="utf-8") as csvfile:
         reader = csv.DictReader(csvfile)
-        output_dir = Path(args.output_dir)
-        generator = torch.Generator()
-        generator.manual_seed(args.seed)
         row_count = get_csv_row_count(args.metadata)
         for row in tqdm.tqdm(reader, total=row_count):
             prompt = row["detailed_text"]
@@ -109,15 +142,13 @@ def main(args):
                     base,
                     refiner,
                     prompt,
+                    negative_prompt,
                     image_path,
                     generator,
+                    args.guidance_scale,
                     args.n_steps,
                     args.high_noise_frac,
                 )
-            else:
-                # Advance the generator's state twice to match the generate_image call
-                _ = torch.rand((), generator=generator)
-                _ = torch.rand((), generator=generator)
 
 
 if __name__ == "__main__":

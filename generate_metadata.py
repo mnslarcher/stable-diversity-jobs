@@ -44,15 +44,15 @@ def load_yaml(file_name):
         return yaml.safe_load(file)
 
 
-def create_prompt(job, adjectives):
-    prompt = f"A professional photo of {job}, {adjectives}"
+def create_prompt(job, positives):
+    prompt = f"A professional photo of {job}, {positives}"
     return prompt
 
 
-def create_detailed_prompt(ethnicity, gender_appearance, job, adjectives):
+def create_detailed_prompt(ethnicity, gender_appearance, job, positives):
     job = " ".join(job.split(" ")[1:])  # Remove a/an
     prompt = (
-        f"A professional photo of {ethnicity} {gender_appearance} {job}, {adjectives}"
+        f"A professional photo of {job}, {ethnicity}, {gender_appearance}, {positives}"
     )
 
     return prompt
@@ -66,7 +66,7 @@ def main(args):
     gender_appearances = load_yaml("prompt_parameters/gender-appearances.yaml")
     jobs_dict = load_yaml("prompt_parameters/jobs.yaml")
     jobs = jobs_dict["female"] + jobs_dict["male"]
-    adjectives = ", ".join(load_yaml("prompt_parameters/adjectives.yaml"))
+    positives = ", ".join(load_yaml("prompt_parameters/positives.yaml"))
 
     output_file_path = output_dir / args.output_file
 
@@ -75,19 +75,25 @@ def main(args):
         writer = csv.writer(file)
         writer.writerow(["image", "text", "detailed_text"])  # Column headers
 
-        image_id = 1
-
         for ethnicity in ethnicities:
             for gender_appearance in gender_appearances:
                 for job in jobs:
-                    prompt = create_prompt(job, adjectives)
+                    prompt = create_prompt(job, positives)
                     detailed_prompt = create_detailed_prompt(
-                        ethnicity, gender_appearance, job, adjectives
+                        ethnicity, gender_appearance, job, positives
                     )
-                    for _ in range(args.repeat_prompt):
-                        file_name = f"image_{image_id}.png"
+
+                    # Replace spaces with "_"
+                    ethnicity = "_".join(ethnicity.split(" "))
+                    gender_appearance = "_".join(gender_appearance.split(" "))
+                    # [1:] is to remove a/an
+                    job = "_".join(job.split(" ")[1:])
+
+                    for i in range(args.repeat_prompt):
+                        file_name = (
+                            f"{ethnicity}_{gender_appearance}_{job}_{i}.png".lower()
+                        )
                         writer.writerow([file_name, prompt, detailed_prompt])
-                        image_id += 1
 
     logging.info(f"CSV file has been created successfully at {output_file_path}.")
 
