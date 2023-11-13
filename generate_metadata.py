@@ -49,11 +49,8 @@ def create_prompt(job, positives):
     return prompt
 
 
-def create_detailed_prompt(ethnicity, gender_appearance, job, positives):
-    job = " ".join(job.split(" ")[1:])  # Remove a/an
-    prompt = (
-        f"A professional photo of {job}, {ethnicity}, {gender_appearance}, {positives}"
-    )
+def create_detailed_prompt(ethnicity, sex, job, positives):
+    prompt = f"A professional photo of {job}, {ethnicity}, {sex}, {positives}"
 
     return prompt
 
@@ -63,7 +60,7 @@ def main(args):
     output_dir.mkdir(parents=True, exist_ok=True)
 
     ethnicities = load_yaml("prompt_parameters/ethnicities.yaml")
-    gender_appearances = load_yaml("prompt_parameters/gender-appearances.yaml")
+    sexes = load_yaml("prompt_parameters/biological-sexes.yaml")
     jobs_dict = load_yaml("prompt_parameters/jobs.yaml")
     jobs = jobs_dict["female"] + jobs_dict["male"]
     positives = ", ".join(load_yaml("prompt_parameters/positives.yaml"))
@@ -76,23 +73,20 @@ def main(args):
         writer.writerow(["image", "text", "detailed_text"])  # Column headers
 
         for ethnicity in ethnicities:
-            for gender_appearance in gender_appearances:
+            for sex in sexes:
                 for job in jobs:
                     prompt = create_prompt(job, positives)
                     detailed_prompt = create_detailed_prompt(
-                        ethnicity, gender_appearance, job, positives
+                        ethnicity, sex, job, positives
                     )
 
                     # Replace spaces with "_"
                     ethnicity = "_".join(ethnicity.split(" "))
-                    gender_appearance = "_".join(gender_appearance.split(" "))
                     # [1:] is to remove a/an
                     job = "_".join(job.split(" ")[1:])
 
                     for i in range(args.repeat_prompt):
-                        file_name = (
-                            f"{ethnicity}_{gender_appearance}_{job}_{i}.png".lower()
-                        )
+                        file_name = f"{ethnicity}_{sex}_{job}_{i}.png".lower()
                         writer.writerow([file_name, prompt, detailed_prompt])
 
     logging.info(f"CSV file has been created successfully at {output_file_path}.")
