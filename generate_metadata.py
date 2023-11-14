@@ -70,7 +70,9 @@ def main(args):
     # Generate prompts and write to a CSV file
     with open(output_file_path, "w", newline="", encoding="utf-8") as file:
         writer = csv.writer(file)
-        writer.writerow(["image", "text", "detailed_text"])  # Column headers
+        writer.writerow(
+            ["image", "text", "detailed_text", "job", "ethnicity", "sex"]
+        )  # Column headers
 
         for i in range(args.repeat_prompt):
             for job in jobs:
@@ -89,7 +91,16 @@ def main(args):
 
                         file_name = f"{job_without_spaces}_{ethnicity_without_spaces}_{sex}_{i}.png".lower()
 
-                        writer.writerow([file_name, prompt, detailed_prompt])
+                        writer.writerow(
+                            [
+                                file_name,
+                                prompt,
+                                detailed_prompt,
+                                job,
+                                ethnicity,
+                                sex,
+                            ]
+                        )
 
     logging.info(f"CSV file has been created successfully at {output_file_path}.")
 
