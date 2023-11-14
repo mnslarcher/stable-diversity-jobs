@@ -72,21 +72,23 @@ def main(args):
         writer = csv.writer(file)
         writer.writerow(["image", "text", "detailed_text"])  # Column headers
 
-        for ethnicity in ethnicities:
-            for sex in sexes:
-                for job in jobs:
-                    prompt = create_prompt(job, positives)
-                    detailed_prompt = create_detailed_prompt(
-                        ethnicity, sex, job, positives
-                    )
+        for i in range(args.repeat_prompt):
+            for job in jobs:
+                # Replace spaces with "_". [1:] is to remove a/an
+                job_without_spaces = "_".join(job.split(" ")[1:])
 
+                for ethnicity in ethnicities:
                     # Replace spaces with "_"
-                    ethnicity = "_".join(ethnicity.split(" "))
-                    # [1:] is to remove a/an
-                    job = "_".join(job.split(" ")[1:])
+                    ethnicity_without_spaces = "_".join(ethnicity.split(" "))
 
-                    for i in range(args.repeat_prompt):
-                        file_name = f"{ethnicity}_{sex}_{job}_{i}.png".lower()
+                    for sex in sexes:
+                        prompt = create_prompt(job, positives)
+                        detailed_prompt = create_detailed_prompt(
+                            ethnicity, sex, job, positives
+                        )
+
+                        file_name = f"{job_without_spaces}_{ethnicity_without_spaces}_{sex}_{i}.png".lower()
+
                         writer.writerow([file_name, prompt, detailed_prompt])
 
     logging.info(f"CSV file has been created successfully at {output_file_path}.")
