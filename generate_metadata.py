@@ -19,15 +19,15 @@ def parse_args():
         "-r",
         "--repeat_prompt",
         type=int,
-        default=5,
-        help="Number of times to repeat each prompt. Defaults to 5.",
+        default=10,
+        help="Number of times to repeat each prompt. Defaults to 10.",
     )
     parser.add_argument(
         "-o",
         "--output_dir",
         type=str,
-        default="./output",
-        help="Directory where the CSV file will be saved. Defaults to ./output.",
+        default="./dataset",
+        help="Directory where the CSV file will be saved. Defaults to ./dataset.",
     )
     parser.add_argument(
         "-f",
@@ -65,13 +65,17 @@ def main(args):
     jobs = jobs_dict["female"] + jobs_dict["male"]
     positives = ", ".join(load_yaml("prompt_parameters/positives.yaml"))
 
+    num_prompts = args.repeat_prompt * len(jobs) * len(ethnicities) * len(sexes)
+
+    logging.info(f"Generating {num_prompts} prompts.")
+
     output_file_path = output_dir / args.output_file
 
     # Generate prompts and write to a CSV file
     with open(output_file_path, "w", newline="", encoding="utf-8") as file:
         writer = csv.writer(file)
         writer.writerow(
-            ["image", "text", "detailed_text", "job", "ethnicity", "sex"]
+            ["file_name", "text", "detailed_text", "job", "ethnicity", "sex"]
         )  # Column headers
 
         for i in range(args.repeat_prompt):

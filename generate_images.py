@@ -16,15 +16,15 @@ def parse_args():
         "-m",
         "--metadata",
         type=str,
-        default="./output/metadata.csv",
+        default="./dataset/metadata.csv",
         help="Path to the CSV file containing prompts and image names. Defaults to ./output/metadata.csv.",
     )
     parser.add_argument(
         "-o",
         "--output_dir",
         type=str,
-        default="./output",
-        help="Directory to save generated images. Defaults to ./output.",
+        default="./dataset",
+        help="Directory to save generated images. Defaults to ./dataset.",
     )
     parser.add_argument(
         "-g",
@@ -110,6 +110,7 @@ def main(args):
     )
     base.set_progress_bar_config(disable=True)
     base.to("cuda")
+    base.unet = torch.compile(base.unet, mode="reduce-overhead", fullgraph=True)
     refiner = DiffusionPipeline.from_pretrained(
         "stabilityai/stable-diffusion-xl-refiner-1.0",
         text_encoder_2=base.text_encoder_2,
@@ -120,6 +121,7 @@ def main(args):
     )
     refiner.set_progress_bar_config(disable=True)
     refiner.to("cuda")
+    refiner.unet = torch.compile(refiner.unet, mode="reduce-overhead", fullgraph=True)
 
     negative_prompt = ", ".join(
         load_yaml("prompt_parameters/negatives.yaml")
@@ -136,7 +138,7 @@ def main(args):
         row_count = get_csv_row_count(args.metadata)
         for row in tqdm.tqdm(reader, total=row_count):
             prompt = row["detailed_text"]
-            image_path = output_dir / f"{row['image']}"
+            image_path = output_dir / f"{row['file_name']}"
             if not image_path.exists():
                 generate_image(
                     base,
